@@ -13,7 +13,45 @@ defmodule JsonApiClient.RequestTest do
     end
   end
 
-  test "fields", do: assert_updates_param(:fields)
+  describe "fields()" do
+    test "fields can be expressed as a string" do
+      req = fields(%Request{}, sometype: "name,email")
+      assert req.params.fields.sometype == "name,email"
+    end
+
+    test "fields can be expressed as a list of strings" do
+      req = fields(%Request{}, sometype: ~w(name email))
+      assert req.params.fields.sometype == "name,email"
+    end
+
+    test "fields can be expressed as a list of atoms" do
+      req = fields(%Request{}, sometype: [:name, :email])
+      assert req.params.fields.sometype == "name,email"
+    end
+        
+    test "fields for multiple types accepted in multiple calls" do
+      req = %Request{}
+      |> fields(type1: [:name, :email])
+      |> fields(type2: [:age])
+
+      assert req.params.fields == %{
+        type1: "name,email",
+        type2:  "age",
+      }
+    end
+
+    test "fields for multiple types accepted in a single call" do
+      req = fields(%Request{},
+        type1: [:name, :email],
+        type2: "age",
+      )
+      assert req.params.fields == %{
+        type1: "name,email",
+        type2:  "age",
+      }
+    end
+  end
+
   test "sort", do: assert_updates_param(:sort)
   test "page", do: assert_updates_param(:page)
   test "filter", do: assert_updates_param(:filter)

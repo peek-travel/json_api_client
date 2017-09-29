@@ -19,7 +19,17 @@ defmodule JsonApiClient.Request do
   def id(req, id)        , do: Map.put(req, :id, id)
   def method(req, method), do: Map.put(req, :method, method)
 
-  def fields(req, fields)  , do: params(req, fields:  fields)
+  def fields(req, fields_to_add) do
+    current_fields = req.params[:fields] || %{}
+    new_fields = fields_to_add
+      |> Enum.map(fn
+        {k, v} when is_list(v) -> {k, Enum.join(v, ",")}
+        {k, v} -> {k, v}
+      end)
+      |> Enum.into(current_fields)
+    params(req, fields: new_fields)
+  end
+
   def sort(req, sort)      , do: params(req, sort:    sort)
   def page(req, page)      , do: params(req, page:    page)
   def filter(req, filter)  , do: params(req, filter:  filter)
