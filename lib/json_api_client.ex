@@ -45,7 +45,6 @@ defmodule JsonApiClient do
       else: url
 
     case HTTPoison.request(method, url, "", headers, http_options) do
-      # TODO: don't always assume 404 will have an invalid body (but allow for it)
       {:ok, %HTTPoison.Response{status_code: 404}} -> {:error, :not_found}
       {:ok, resp} -> {:ok, atomize_keys(Poison.decode!(resp.body))}
       {:error, err} -> {:error, err}
