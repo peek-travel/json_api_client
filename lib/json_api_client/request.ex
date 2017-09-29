@@ -5,7 +5,7 @@ defmodule JsonApiClient.Request do
 
   defstruct(
     base_url: nil,
-    params: nil,
+    params: %{},
     id: nil,
     method: :get,
     headers: [],
@@ -13,7 +13,7 @@ defmodule JsonApiClient.Request do
   )
 
   def request(base_url) do
-    %__MODULE__{base_url: base_url, params: %{}}
+    %__MODULE__{base_url: base_url}
   end
 
   def id(req, id)        , do: Map.put(req, :id, id)
