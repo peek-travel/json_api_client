@@ -12,11 +12,15 @@ defmodule JsonApiClient.Request do
     options: [],
   )
 
+  @doc "Create a request with the given base URL"
   def request(base_url) do
     %__MODULE__{base_url: base_url}
   end
 
-  def id(req, id)        , do: Map.put(req, :id, id)
+  @doc "Add an id to the request."
+  def id(req, id), do: Map.put(req, :id, id)
+
+  @doc "Specify the HTTP method for the request."
   def method(req, method), do: Map.put(req, :method, method)
 
   @doc """
@@ -58,10 +62,24 @@ defmodule JsonApiClient.Request do
     params(req, include: relationships)
   end
 
-  def sort(req, sort)    , do: params(req, sort:    sort)
-  def page(req, page)    , do: params(req, page:    page)
-  def filter(req, filter), do: params(req, filter:  filter)
+  @doc "Specify the sort param for the request."
+  def sort(req, sort), do: params(req, sort: sort)
+  @doc "Specify the page param for the request."
+  def page(req, page), do: params(req, page: page)
+  @doc "Specify the filter param for the request."
+  def filter(req, filter), do: params(req, filter: filter)
 
+  @doc """
+  Add query params to the request.
+
+  Will add to existing params when called multiple times. Supports nested
+  attributes.
+
+      # to add "custom_param1=foo&custom_param2=bar" to the query...
+      params(%Request{}, custom_param1: "foo", custom_param2: "bar")
+      # to add "foo[bar]=baz" to the query...
+      params(%Request{}, foo: %{bar: %{baz: 3}})
+  """
   def params(req, list) do
     Enum.reduce(list, req, fn ({param, val}, acc) ->
       new_params = Map.put(acc.params, param, val)

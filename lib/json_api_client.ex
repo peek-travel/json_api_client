@@ -1,6 +1,7 @@
 defmodule JsonApiClient do
   @moduledoc """
-  Documentation for JsonApiClient.
+  A client library for interacting with REST APIs that comply with
+  the JSON API spec described at http://jsonapi.org
   """
 
   @client_name Application.get_env(:json_api_client, :client_name)
@@ -9,8 +10,14 @@ defmodule JsonApiClient do
 
   alias __MODULE__.Request
 
+  @doc "Execute a JSON API Request using HTTP GET"
   def fetch(req), do: req |> Request.method(:get) |> execute
 
+  @doc """
+  Execute a JSON API Request
+
+  Takes a JsonApiClient.Request and preforms the described request.
+  """
   def execute(req) do
     url = [req.base_url, req.id]
           |> Enum.reject(&is_nil/1)
@@ -29,13 +36,13 @@ defmodule JsonApiClient do
     end
   end
 
-  def atomize_keys(map) when is_map(map) do
+  defp atomize_keys(map) when is_map(map) do
     for {key, val} <- map, into: %{} do
       {String.to_atom(key), atomize_keys(val)}
     end
   end
-  def atomize_keys(list) when is_list(list), do: Enum.map(list, &atomize_keys/1)
-  def atomize_keys(val), do: val
+  defp atomize_keys(list) when is_list(list), do: Enum.map(list, &atomize_keys/1)
+  defp atomize_keys(val), do: val
 
   defp default_options do
     [timeout: timeout(), recv_timeout: timeout()]
