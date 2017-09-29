@@ -55,7 +55,18 @@ defmodule JsonApiClient.RequestTest do
   test "sort", do: assert_updates_param(:sort)
   test "page", do: assert_updates_param(:page)
   test "filter", do: assert_updates_param(:filter)
-  test "include", do: assert_updates_param(:include)
+
+  describe "include" do
+    test "accepts a single relationship to include" do
+      req = include(%Request{}, "comments.author")
+      assert req.params.include == "comments.author"
+    end
+
+    test "accepts multiple relationships to include" do
+      req = include(%Request{}, ["comments.author", "author"])
+      assert req.params.include == "comments.author,author"
+    end
+  end
 
   def assert_updates_param(field_name) do
     assert %{params: %{^field_name => "someval"}} = 
