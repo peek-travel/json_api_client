@@ -3,6 +3,7 @@ defmodule JsonApiClientTest do
   doctest JsonApiClient, import: true
 
   import JsonApiClient
+  import JsonApiClient.Request
 
   setup do
     bypass = Bypass.open
