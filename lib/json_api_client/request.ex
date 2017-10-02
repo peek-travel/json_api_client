@@ -13,7 +13,7 @@ defmodule JsonApiClient.Request do
   )
 
   @doc "Create a request with the given base URL"
-  def request(base_url) do
+  def new(base_url) do
     %__MODULE__{base_url: base_url}
   end
 

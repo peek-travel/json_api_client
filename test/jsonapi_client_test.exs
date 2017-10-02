@@ -4,6 +4,7 @@ defmodule JsonApiClientTest do
 
   import JsonApiClient
   import JsonApiClient.Request
+  alias JsonApiClient.Request
 
   setup do
     bypass = Bypass.open
@@ -18,12 +19,12 @@ defmodule JsonApiClientTest do
       Plug.Conn.resp(conn, 200, Poison.encode! doc)
     end
 
-    assert {:ok, doc} == request(context.url <> "/articles")
+    assert {:ok, doc} == Request.new(context.url <> "/articles")
     |> id("123")
     |> method(:get)
     |> execute
 
-    assert {:ok, doc} == request(context.url <> "/articles")
+    assert {:ok, doc} == Request.new(context.url <> "/articles")
     |> id("123")
     |> fetch
   end
@@ -48,7 +49,7 @@ defmodule JsonApiClientTest do
       Plug.Conn.resp(conn, 200, Poison.encode! doc)
     end
 
-    assert {:ok, doc} == request(context.url <> "/articles")
+    assert {:ok, doc} == Request.new(context.url <> "/articles")
     |> fields(articles: "title,topic", authors: "first-name,last-name,twitter")
     |> include(:author)
     |> sort(:id)
