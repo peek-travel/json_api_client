@@ -16,17 +16,17 @@ defmodule JsonApiClient.RequestTest do
   describe "fields()" do
     test "fields can be expressed as a string" do
       req = fields(%Request{}, sometype: "name,email")
-      assert query_params(req) == [{"fields[sometype]", "name,email"}]
+      assert get_query_params(req) == [{"fields[sometype]", "name,email"}]
     end
 
     test "fields can be expressed as a list of strings" do
       req = fields(%Request{}, sometype: ~w(name email))
-      assert query_params(req) == [{"fields[sometype]", "name,email"}]
+      assert get_query_params(req) == [{"fields[sometype]", "name,email"}]
     end
 
     test "fields can be expressed as a list of atoms" do
       req = fields(%Request{}, sometype: [:name, :email])
-      assert query_params(req) == [{"fields[sometype]", "name,email"}]
+      assert get_query_params(req) == [{"fields[sometype]", "name,email"}]
     end
         
     test "fields for multiple types accepted in multiple calls" do
@@ -34,7 +34,7 @@ defmodule JsonApiClient.RequestTest do
       |> fields(type1: [:name, :email])
       |> fields(type2: [:age])
 
-      assert query_params(req) == [
+      assert get_query_params(req) == [
         {"fields[type1]", "name,email"},
         {"fields[type2]", "age"},
       ]
@@ -45,7 +45,7 @@ defmodule JsonApiClient.RequestTest do
         type1: [:name, :email],
         type2: "age",
       )
-      assert query_params(req) == [
+      assert get_query_params(req) == [
         {"fields[type1]", "name,email"},
         {"fields[type2]", "age"},
       ]
@@ -59,12 +59,12 @@ defmodule JsonApiClient.RequestTest do
   describe "include" do
     test "accepts a single relationship to include" do
       req = include(%Request{}, "comments.author")
-      assert query_params(req) == [{"include", "comments.author"}]
+      assert get_query_params(req) == [{"include", "comments.author"}]
     end
 
     test "accepts multiple relationships to include" do
       req = include(%Request{}, ["comments.author", "author"])
-      assert query_params(req) == [{"include", "comments.author,author"}]
+      assert get_query_params(req) == [{"include", "comments.author,author"}]
     end
       
     test "multiple calls are addative" do
@@ -72,7 +72,7 @@ defmodule JsonApiClient.RequestTest do
       |> include("comments.author")
       |> include("author")
 
-      assert query_params(req) == [{"include", "comments.author,author"}]
+      assert get_query_params(req) == [{"include", "comments.author,author"}]
     end
   end
 

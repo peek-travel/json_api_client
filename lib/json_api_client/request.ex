@@ -13,20 +13,6 @@ defmodule JsonApiClient.Request do
     options: [],
   )
 
-  def url(%Request{base_url: base_url, id: id}) do
-    [base_url, id]
-    |> Enum.reject(&is_nil/1)
-    |> Enum.join("/")
-  end
-
-  def query_params(%Request{params: params}) when params != %{} do
-    params
-    |> encode_fields
-    |> encode_include
-    |> UriQuery.params
-  end
-  def query_params(_req), do: []
-
   @doc "Create a request with the given base URL"
   def new(base_url) do
     %__MODULE__{base_url: base_url}
@@ -119,5 +105,29 @@ defmodule JsonApiClient.Request do
       put_in(acc.params, new_params)
     end)
   end
+
+  @doc """
+  Get the url for the request
+
+  The URL returned does not include the query string
+  """
+  def get_url(%Request{base_url: base_url, id: id}) do
+    [base_url, id]
+    |> Enum.reject(&is_nil/1)
+    |> Enum.join("/")
+  end
+
+  @doc """
+  Get the query parameters for the request
+
+  Retruns an Enumerable suitable for passing to `URI.encode_query`
+  """
+  def get_query_params(%Request{params: params}) when params != %{} do
+    params
+    |> encode_fields
+    |> encode_include
+    |> UriQuery.params
+  end
+  def get_query_params(_req), do: []
 
 end

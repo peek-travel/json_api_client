@@ -19,8 +19,8 @@ defmodule JsonApiClient do
   Takes a JsonApiClient.Request and preforms the described request.
   """
   def execute(req) do
-    url          = Request.url(req)
-    query_params = Request.query_params(req)
+    url          = Request.get_url(req)
+    query_params = Request.get_query_params(req)
     headers      = req.headers ++ default_headers()
     http_options = req.options ++ default_options() ++ [params: query_params]
     body = ""
