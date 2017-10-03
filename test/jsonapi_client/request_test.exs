@@ -4,6 +4,12 @@ defmodule JsonApiClient.RequestTest do
   alias JsonApiClient.Request
   import JsonApiClient.Request
 
+  describe "get_url()" do
+    test "build a url from the base_url and id" do
+
+    end
+  end
+
   describe "params()" do
     test "adds a single value to the params map" do
       assert %Request{params: %{a: 1}} = params(%Request{}, a: 1)
@@ -82,6 +88,7 @@ defmodule JsonApiClient.RequestTest do
   end
 
   test "id", do: assert_updates_field(:id)
+  test "resource", do: assert_updates_field(:resource)
   test "method", do: assert_updates_field(:method)
 
   def assert_updates_field(field_name) do
