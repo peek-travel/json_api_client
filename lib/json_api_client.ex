@@ -21,8 +21,13 @@ defmodule JsonApiClient do
   def execute(req) do
     url          = Request.get_url(req)
     query_params = Request.get_query_params(req)
-    headers      = req.headers ++ default_headers()
-    http_options = req.options ++ default_options() ++ [params: query_params]
+    headers      = default_headers()
+                   |> Map.merge(req.headers)
+                   |> Enum.into([])
+    http_options = default_options()
+                   |> Map.merge(req.options)
+                   |> Map.put(:params, query_params)
+                   |> Enum.into([])
     body = ""
 
     case HTTPoison.request(
@@ -43,7 +48,10 @@ defmodule JsonApiClient do
   defp atomize_keys(val), do: val
 
   defp default_options do
-    [timeout: timeout(), recv_timeout: timeout()]
+    %{
+      timeout: timeout(),
+      recv_timeout: timeout(),
+    }
   end
 
   defp default_headers do

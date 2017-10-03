@@ -10,8 +10,8 @@ defmodule JsonApiClient.Request do
     id: nil,
     resource: nil,
     method: :get,
-    headers: [],
-    options: [],
+    headers: %{},
+    options: %{},
   )
 
   @doc "Create a request with the given base URL"
