@@ -19,17 +19,15 @@ defmodule JsonApiClient do
   Takes a JsonApiClient.Request and preforms the described request.
   """
   def execute(req) do
-    url = [req.base_url, req.id]
-          |> Enum.reject(&is_nil/1)
-          |> Enum.join("/")
+    url          = Request.url(req)
+    query_params = Request.query_params(req)
     headers      = req.headers ++ default_headers()
-    http_options = req.options ++ default_options()
+    http_options = req.options ++ default_options() ++ [params: query_params]
+    body = ""
 
-    url = if req.params != %{},
-      do: "#{url}?#{URI.encode_query UriQuery.params(req.params)}",
-      else: url
-
-    case HTTPoison.request(req.method, url, "", headers, http_options) do
+    case HTTPoison.request(
+      req.method, url, body, headers, http_options
+    ) do
       {:ok, %HTTPoison.Response{status_code: 404}} -> {:error, :not_found}
       {:ok, resp} -> {:ok, atomize_keys(Poison.decode!(resp.body))}
       {:error, err} -> {:error, err}
