@@ -59,6 +59,21 @@ defmodule JsonApiClientTest do
     |> fetch
   end
 
+  test "delete a resource", context do
+    Bypass.expect context.bypass, "DELETE", "/articles/123", fn conn ->
+      assert_has_json_api_headers(conn)
+      Plug.Conn.resp(conn, 204, "")
+    end
+
+    assert {:ok, ""} == Request.new(context.url)
+    |> resource(%Resource{type: "articles", id: "123"})
+    |> delete
+
+    assert {:ok, ""} == Request.new(context.url <> "/articles")
+    |> id("123")
+    |> delete
+  end
+
   test "create a resource", context do
     doc = single_resource_doc()
     Bypass.expect context.bypass, "POST", "/articles", fn conn ->

@@ -19,6 +19,9 @@ defmodule JsonApiClient do
   @doc "Execute a JSON API Request using HTTP PATCH"
   def update(req), do: req |> Request.method(:patch) |> execute
 
+  @doc "Execute a JSON API Request using HTTP DELETE"
+  def delete(req), do: req |> Request.method(:delete) |> execute
+
   @doc """
   Execute a JSON API Request
 
@@ -40,9 +43,16 @@ defmodule JsonApiClient do
       req.method, url, body, headers, http_options
     ) do
       {:ok, %HTTPoison.Response{status_code: 404}} -> {:error, :not_found}
-      {:ok, resp} -> {:ok, atomize_keys(Poison.decode!(resp.body))}
+      {:ok, resp} -> {:ok, parse_body(resp.body)}
       {:error, err} -> {:error, err}
     end
+  end
+
+  defp parse_body(""), do: ""
+  defp parse_body(body) do
+    body
+    |> Poison.decode!
+    |> atomize_keys
   end
 
   defp atomize_keys(map) when is_map(map) do
