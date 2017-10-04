@@ -59,8 +59,15 @@ defmodule JsonApiClient.Mixfile do
   defp package do
     [
       organization: "decisiv",
-      licenses: [""],
-      maintainers: ["Julian Skinner", "Eduardo Carneiro", "Cloves Carneiro"],
+      licenses: ["MIT"],
+      maintainers: [
+        "Julian Skinner",
+        "Eduardo Carneiro",
+        "Cloves Carneiro",
+        "Trevor Little",
+        "George Murphy",
+        "Chan Park",
+      ],
       links: %{
         "Github" => "https://github.decisiv.net/PlatformServices/ex_decisiv_api_client"
       }
