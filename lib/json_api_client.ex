@@ -13,6 +13,12 @@ defmodule JsonApiClient do
   @doc "Execute a JSON API Request using HTTP GET"
   def fetch(req), do: req |> Request.method(:get) |> execute
 
+  @doc "Execute a JSON API Request using HTTP POST"
+  def create(req), do: req |> Request.method(:post) |> execute
+
+  @doc "Execute a JSON API Request using HTTP PATCH"
+  def update(req), do: req |> Request.method(:patch) |> execute
+
   @doc """
   Execute a JSON API Request
 
@@ -28,7 +34,7 @@ defmodule JsonApiClient do
                    |> Map.merge(req.options)
                    |> Map.put(:params, query_params)
                    |> Enum.into([])
-    body = ""
+    body = Request.get_body(req)
 
     case HTTPoison.request(
       req.method, url, body, headers, http_options

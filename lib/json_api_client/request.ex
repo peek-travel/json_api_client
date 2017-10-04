@@ -164,4 +164,20 @@ defmodule JsonApiClient.Request do
   end
   def get_query_params(_req), do: []
 
+  @doc """
+  Retruns the HTTP body of the request
+  """
+  def get_body(%Request{method: method})
+    when method == :get
+    when method == :delete
+  do
+    ""
+  end
+  def get_body(%Request{method: method} = req)
+    when method == :patch
+    when method == :post
+  do
+    Poison.encode!(%{data: req.resource})
+  end
+
 end

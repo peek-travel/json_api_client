@@ -4,12 +4,6 @@ defmodule JsonApiClient.RequestTest do
   alias JsonApiClient.Request
   import JsonApiClient.Request
 
-  describe "get_url()" do
-    test "build a url from the base_url and id" do
-
-    end
-  end
-
   describe "params()" do
     test "adds a single value to the params map" do
       assert %Request{params: %{a: 1}} = params(%Request{}, a: 1)
@@ -94,5 +88,29 @@ defmodule JsonApiClient.RequestTest do
   def assert_updates_field(field_name) do
     assert %{^field_name => "someval"} = 
       apply(Request, field_name, [%Request{}, "someval"])
+  end
+
+  describe "get_body()" do
+    test "uses resource for POST & PATCH" do
+      for http_method <- [:post, :patch] do
+        parsed_body = new("http://api.net")
+        |> resource(%JsonApiClient.Resource{type: "users", attributes: %{name: "foo"}})
+        |> method(http_method)
+        |> get_body
+        |> Poison.decode!
+
+        assert %{"data" => %{"type" => "users", "attributes" => %{"name" => "foo"}}} = parsed_body
+      end
+    end
+    test "GET & DELETE" do
+      for http_method <- [:get, :delete] do
+        body = new("http://api.net")
+        |> resource(%JsonApiClient.Resource{type: "users", attributes: %{name: "foo"}})
+        |> method(http_method)
+        |> get_body
+
+        assert body == ""
+      end
+    end
   end
 end

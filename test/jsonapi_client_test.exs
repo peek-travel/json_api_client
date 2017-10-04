@@ -4,7 +4,7 @@ defmodule JsonApiClientTest do
 
   import JsonApiClient
   import JsonApiClient.Request
-  alias JsonApiClient.Request
+  alias JsonApiClient.{Request, Resource}
 
   setup do
     bypass = Bypass.open
@@ -57,6 +57,67 @@ defmodule JsonApiClientTest do
     |> filter(published: true)
     |> params(custom1: 1, custom2: 2)
     |> fetch
+  end
+
+  test "create a resource", context do
+    doc = single_resource_doc()
+    Bypass.expect context.bypass, "POST", "/articles", fn conn ->
+      assert_has_json_api_headers(conn)
+
+      {:ok, body, conn} = Plug.Conn.read_body(conn)
+      assert %{
+        "data" => %{
+          "type" => "articles",
+          "attributes" => %{
+            "title" => "JSON API paints my bikeshed!",
+          },
+        }
+      } = Poison.decode! body
+
+      Plug.Conn.resp(conn, 201, Poison.encode! doc)
+    end
+
+    new_article = %Resource{
+      type: "articles",
+      attributes: %{
+        title: "JSON API paints my bikeshed!",
+      }
+    }
+
+    assert {:ok, doc} == Request.new(context.url)
+    |> resource(new_article)
+    |> create
+  end
+
+  test "update a resource", context do
+    doc = single_resource_doc()
+    Bypass.expect context.bypass, "PATCH", "/articles/123", fn conn ->
+      assert_has_json_api_headers(conn)
+
+      {:ok, body, conn} = Plug.Conn.read_body(conn)
+      assert %{
+        "data" => %{
+          "type" => "articles",
+          "attributes" => %{
+            "title" => "JSON API paints my bikeshed!",
+          },
+        }
+      } = Poison.decode! body
+
+      Plug.Conn.resp(conn, 200, Poison.encode! doc)
+    end
+
+    new_article = %Resource{
+      type: "articles",
+      id: "123",
+      attributes: %{
+        title: "JSON API paints my bikeshed!",
+      }
+    }
+
+    assert {:ok, doc} == Request.new(context.url)
+    |> resource(new_article)
+    |> update
   end
 
   def single_resource_doc do
