@@ -167,17 +167,11 @@ defmodule JsonApiClient.Request do
   @doc """
   Retruns the HTTP body of the request
   """
-  def get_body(%Request{method: method})
-    when method == :get
-    when method == :delete
+  def get_body(%Request{method: method, resource: resource})
+  when method in [:post, :patch, :put] and not is_nil(resource)
   do
-    ""
+    Poison.encode!(%{data: resource})
   end
-  def get_body(%Request{method: method} = req)
-    when method == :patch
-    when method == :post
-  do
-    Poison.encode!(%{data: req.resource})
-  end
+  def get_body(_req), do: ""
 
 end

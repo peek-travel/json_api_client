@@ -112,5 +112,11 @@ defmodule JsonApiClient.RequestTest do
         assert body == ""
       end
     end
+
+    test "returns empty string if resource not present" do
+      for http_method <- [:delete, :post, :patch, :get, :delete] do
+        assert "" = new("http://api.net") |> method(http_method) |> get_body
+      end
+    end
   end
 end
