@@ -51,7 +51,7 @@ defmodule JsonApiClient.Mixfile do
   def docs do
     [
       main: "README", 
-      source_url: "https://github.decisiv.net/PlatformServices/ex_decisiv_api_client",
+      source_url: "https://github.com/Decisiv/json_api_client",
       extras: ["README.md"],
     ]
   end
@@ -69,7 +69,7 @@ defmodule JsonApiClient.Mixfile do
         "Chan Park",
       ],
       links: %{
-        "Github" => "https://github.decisiv.net/PlatformServices/ex_decisiv_api_client"
+        "Github" => "https://github.com/Decisiv/json_api_client"
       }
     ]
   end
