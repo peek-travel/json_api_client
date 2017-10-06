@@ -19,7 +19,7 @@ defmodule JsonApiClient.Mixfile do
         "coveralls.post": :test,
       ],
       deps: deps(),
-      source_url: "https://github.decisiv.net/PlatformServices/ex_decisiv_api_client",
+      docs: docs(),
     ]
   end
 
@@ -45,6 +45,14 @@ defmodule JsonApiClient.Mixfile do
       {:faker, "~> 0.9"},
       {:exjsx, "~> 4.0.0"},
       {:uri_query, "~> 0.1.1"},
+    ]
+  end
+
+  def docs do
+    [
+      main: "README", 
+      source_url: "https://github.decisiv.net/PlatformServices/ex_decisiv_api_client",
+      extras: ["README.md"],
     ]
   end
 
