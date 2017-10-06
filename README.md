@@ -1,3 +1,6 @@
+# Warning:
+This library is currently in an alpha state and is not yet feature complete. It is not recommended for production environments. Stay tuned for a 1.0 release soon.
+
 # JsonApiClient
 
 A JSON API Client for elixir.
