@@ -4,7 +4,7 @@ defmodule JsonApiClientTest do
 
   import JsonApiClient
   import JsonApiClient.Request
-  alias JsonApiClient.{Request, Resource}
+  alias JsonApiClient.{Request, Resource, Response, RequestError}
 
   setup do
     bypass = Bypass.open
@@ -19,12 +19,12 @@ defmodule JsonApiClientTest do
       Plug.Conn.resp(conn, 200, Poison.encode! doc)
     end
 
-    assert {:ok, doc} == Request.new(context.url <> "/articles")
+    assert {:ok, %Response{status: 200, doc: doc}} == Request.new(context.url <> "/articles")
     |> id("123")
     |> method(:get)
     |> execute
 
-    assert {:ok, doc} == Request.new(context.url <> "/articles")
+    assert {:ok, %Response{status: 200, doc: doc}} == Request.new(context.url <> "/articles")
     |> id("123")
     |> fetch
   end
@@ -49,7 +49,7 @@ defmodule JsonApiClientTest do
       Plug.Conn.resp(conn, 200, Poison.encode! doc)
     end
 
-    assert {:ok, doc} == Request.new(context.url <> "/articles")
+    assert {:ok, %Response{status: 200, doc: doc}} == Request.new(context.url <> "/articles")
     |> fields(articles: "title,topic", authors: "first-name,last-name,twitter")
     |> include(:author)
     |> sort(:id)
@@ -65,11 +65,11 @@ defmodule JsonApiClientTest do
       Plug.Conn.resp(conn, 204, "")
     end
 
-    assert {:ok, ""} == Request.new(context.url)
+    assert {:ok, %Response{status: 204, doc: nil}} == Request.new(context.url)
     |> resource(%Resource{type: "articles", id: "123"})
     |> delete
 
-    assert {:ok, ""} == Request.new(context.url <> "/articles")
+    assert {:ok, %Response{status: 204, doc: nil}} == Request.new(context.url <> "/articles")
     |> id("123")
     |> delete
   end
@@ -99,7 +99,7 @@ defmodule JsonApiClientTest do
       }
     }
 
-    assert {:ok, doc} == Request.new(context.url)
+    assert {:ok, %Response{status: 201, doc: doc}} == Request.new(context.url)
     |> resource(new_article)
     |> create
   end
@@ -130,25 +130,62 @@ defmodule JsonApiClientTest do
       }
     }
 
-    assert {:ok, doc} == Request.new(context.url)
+    assert {:ok, %Response{status: 200, doc: doc}} == Request.new(context.url)
     |> resource(new_article)
     |> update
   end
 
+  describe "Error Contidions" do
+    test "HTTP success codes with invalid Documents", context do
+      Bypass.expect context.bypass, fn conn ->
+        Plug.Conn.resp(conn, 200, "this is not json")
+      end
+
+      assert {:error, %JsonApiClient.RequestError{status: 200}} = fetch(Request.new(context.url <> "/"))
+    end
+
+    test "HTTP error codes with no content", context do
+      Bypass.expect context.bypass, fn conn ->
+        Plug.Conn.resp(conn, 422, "")
+      end
+
+      assert {:ok, %Response{status: 422, doc: nil}} == fetch(Request.new(context.url <> "/"))
+    end
+
+    test "HTTP error codes with valid Documents", context do
+      doc = error_doc()
+      Bypass.expect context.bypass, fn conn ->
+        Plug.Conn.resp(conn, 422, Poison.encode! doc)
+      end
+
+      assert {:ok, %Response{status: 422, doc: doc}} == fetch(Request.new(context.url <> "/"))
+    end
+
+    test "Failed TCP/HTTP connection", context do
+      Bypass.down(context.bypass)
+
+      assert {:error, %RequestError{
+        original_error: %{reason: reason},
+        status: nil,
+        reason: reason,
+      }} = fetch(Request.new(context.url <> "/"))
+    end
+  end
+
   def single_resource_doc do
-    %{
-      links: %{
+    %JsonApiClient.Document{
+      links: %JsonApiClient.Links{
         self: "http://example.com/articles/1"
       },
-      data: %{
+      data: %JsonApiClient.Resource{
         type: "articles",
         id: "1",
         attributes: %{
-          title: "JSON API paints my bikeshed!"
+          "title" => "JSON API paints my bikeshed!"
         },
         relationships: %{
-          author: %{
-            links: %{
+          "author" => %JsonApiClient.Relationship{
+            links: %JsonApiClient.Links{
               related: "http://example.com/articles/1/author"
             }
           }
@@ -158,55 +195,70 @@ defmodule JsonApiClientTest do
   end
 
   def multiple_resource_doc do
-    %{
-      links: %{
+    %JsonApiClient.Document{
+      links: %JsonApiClient.Links{
         self: "http://example.com/articles"
       },
-      data: [%{
+      data: [%JsonApiClient.Resource{
         type: "articles",
         id: "1",
         attributes: %{
-          title: "JSON API paints my bikeshed!",
-          category: "json-api",
+          "title" => "JSON API paints my bikeshed!",
+          "category" => "json-api",
         },
         relationships: %{
-          author: %{
-            links: %{
+          "author" => %JsonApiClient.Relationship{
+            links: %JsonApiClient.Links{
               self: "http://example.com/articles/1/relationships/author",
               related: "http://example.com/articles/1/author"
             },
-            data: %{ type: "people", id: "9" }
+            data: %JsonApiClient.ResourceIdentifier{ type: "people", id: "9" }
           },
         }	
-      }, %{
+      }, %JsonApiClient.Resource{
         type: "articles",
         id: "2",
         attributes: %{
-          title: "Rails is Omakase",
-          category: "rails",
+          "title" => "Rails is Omakase",
+          "category" => "rails",
         },
         relationships: %{
-          author: %{
-            links: %{
+          "author" => %JsonApiClient.Relationship{
+            links: %JsonApiClient.Links{
               self: "http://example.com/articles/1/relationships/author",
               related: "http://example.com/articles/1/author"
             },
-            data: %{ type: "people", id: "9" }
+            data: %JsonApiClient.ResourceIdentifier{ type: "people", id: "9" }
           },
         }	
       }],
-      included: [%{
+      included: [%JsonApiClient.Resource{
         type: "people",
         id: "9",
         attributes: %{
-          "first-name": "Dan",
-          "last-name": "Gebhardt",
-          twitter: "dgeb"
+          "first-name" => "Dan",
+          "last-name" => "Gebhardt",
+          "twitter" => "dgeb",
         },
-        links: %{
+        links: %JsonApiClient.Links{
           self: "http://example.com/people/9"
         }
       }]
+    }
+  end
+
+  def error_doc do
+    %JsonApiClient.Document{
+      errors: [
+	%JsonApiClient.Error{
+	  status: "422",
+	  source: %JsonApiClient.ErrorSource{
+            pointer: "/data/attributes/first-name" 
+          },
+	  title:  "Invalid Attribute",
+	  detail: "First name must contain at least three characters."
+	}
+      ]
     }
   end
 

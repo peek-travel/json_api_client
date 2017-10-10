@@ -8,7 +8,7 @@ defmodule JsonApiClient do
   @timeout Application.get_env(:json_api_client, :timeout, 500)
   @version Mix.Project.config[:version]
 
-  alias __MODULE__.Request
+  alias __MODULE__.{Request, RequestError, Response, Parser}
 
   @doc "Execute a JSON API Request using HTTP GET"
   def fetch(req), do: req |> Request.method(:get) |> execute
@@ -26,8 +26,39 @@ defmodule JsonApiClient do
   Execute a JSON API Request
 
   Takes a JsonApiClient.Request and preforms the described request.
+  
+  Returns either a tuple with `:ok` and a `JsonApiClient.Response` struct (or
+  nil) or `:error` and a `JsonApiClient.RequestError` struct depending on the
+  http response code and whether the server response was valid according to the
+  JSON API spec.
+
+  | Scenario     | Server Response Valid | Return Value                                                                         |
+  |--------------|-----------------------|--------------------------------------------------------------------------------------|
+  | 2**          | yes                   | `{:ok, %Response{status: 2**, doc: %Document{}}`                                     |
+  | 4**          | yes                   | `{:ok, %Response{status: 4**, doc: %Document{} or nil}`                              |
+  | 5**          | yes                   | `{:ok, %Response{status: 5**, doc: %Document{} or nil}`                              |
+  | 2**          | no                    | `{:error, %RequestError{status: 2**, reason: "Invalid response body"}}`              |
+  | 4**          | no                    | `{:ok, %Response{status: 4**, doc: nil}}`                                            |
+  | 5**          | no                    | `{:ok, %Response{status: 3**, doc: nil}}`                                            |
+  | socket error | n/a                   | `{:error, %RequestError{status: nil, reason: :econnrefused, original_error: error}}` |
+
   """
   def execute(req) do
+    with {:ok, response} <- do_request(req),
+         {:ok, parsed}   <- parse_response(response)
+    do
+      {:ok, parsed}
+    else
+      {:error, %RequestError{} = error} -> {:error, error}
+      {:error, error} ->
+        {:error, %RequestError{
+          original_error: error,
+          reason: error.reason
+        }}
+    end
+  end
+
+  defp do_request(req) do
     url          = Request.get_url(req)
     query_params = Request.get_query_params(req)
     headers      = default_headers()
@@ -39,29 +70,25 @@ defmodule JsonApiClient do
                    |> Enum.into([])
     body = Request.get_body(req)
 
-    case HTTPoison.request(
-      req.method, url, body, headers, http_options
-    ) do
-      {:ok, %HTTPoison.Response{status_code: 404}} -> {:error, :not_found}
-      {:ok, resp} -> {:ok, parse_body(resp.body)}
-      {:error, err} -> {:error, err}
+    HTTPoison.request(req.method, url, body, headers, http_options)
+  end
+
+  defp parse_response(response) do
+    with {:ok, doc} <- parse_document(response.body)
+    do
+      {:ok, %Response{status: response.status_code, doc: doc}}
+    else
+      {:error, error} ->
+        {:error, %RequestError{
+          reason: "Parse Error",
+          original_error: error,
+          status: response.status_code,
+        }}
     end
   end
 
-  defp parse_body(""), do: ""
-  defp parse_body(body) do
-    body
-    |> Poison.decode!
-    |> atomize_keys
-  end
-
-  defp atomize_keys(map) when is_map(map) do
-    for {key, val} <- map, into: %{} do
-      {String.to_atom(key), atomize_keys(val)}
-    end
-  end
-  defp atomize_keys(list) when is_list(list), do: Enum.map(list, &atomize_keys/1)
-  defp atomize_keys(val), do: val
+  defp parse_document(""), do: {:ok, nil}
+  defp parse_document(json), do: Parser.parse(json)
 
   defp default_options do
     %{
@@ -85,28 +112,4 @@ defmodule JsonApiClient do
   defp timeout do
     @timeout
   end
-end
-
-defmodule JsonApiClient.Resource do
-  @moduledoc """
-  JSON API Resource Object
-  http://jsonapi.org/format/#document-resource-objects
-  """
-
-  defstruct(
-    id:            nil,
-    type:          nil,
-    attributes:    nil,
-    relationships: nil,
-    meta:          nil,
-  )
-end
-
-defmodule JsonApiClient.Links do
-  @moduledoc """
-  JSON API Links Object
-  http://jsonapi.org/format/#document-links
-  """
-
-  defstruct self: nil, related: nil
 end
