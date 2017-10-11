@@ -12,6 +12,19 @@ defmodule JsonApiClientTest do
     {:ok, bypass: bypass, url: "http://localhost:#{bypass.port}"}
   end
 
+  test "includes status and headers from the HTTP response", context do
+    Bypass.expect context.bypass, "GET", "/articles/123", fn conn ->
+      conn 
+      |> Plug.Conn.resp(200, "")
+      |> Plug.Conn.put_resp_header("X-Test-Header", "42")
+    end
+
+    {:ok, response} = fetch Request.new(context.url <> "/articles/123")
+
+    assert response.status == 200
+    assert Enum.member?(response.headers, {"X-Test-Header", "42"})
+  end
+
   test "get a resource", context do
     doc = single_resource_doc()
     Bypass.expect context.bypass, "GET", "/articles/123", fn conn ->
@@ -19,12 +32,12 @@ defmodule JsonApiClientTest do
       Plug.Conn.resp(conn, 200, Poison.encode! doc)
     end
 
-    assert {:ok, %Response{status: 200, doc: doc}} == Request.new(context.url <> "/articles")
+    assert {:ok, %Response{status: 200, doc: ^doc}} = Request.new(context.url <> "/articles")
     |> id("123")
     |> method(:get)
     |> execute
 
-    assert {:ok, %Response{status: 200, doc: doc}} == Request.new(context.url <> "/articles")
+    assert {:ok, %Response{status: 200, doc: ^doc}} = Request.new(context.url <> "/articles")
     |> id("123")
     |> fetch
   end
@@ -49,7 +62,7 @@ defmodule JsonApiClientTest do
       Plug.Conn.resp(conn, 200, Poison.encode! doc)
     end
 
-    assert {:ok, %Response{status: 200, doc: doc}} == Request.new(context.url <> "/articles")
+    assert {:ok, %Response{status: 200, doc: ^doc}} = Request.new(context.url <> "/articles")
     |> fields(articles: "title,topic", authors: "first-name,last-name,twitter")
     |> include(:author)
     |> sort(:id)
@@ -65,11 +78,11 @@ defmodule JsonApiClientTest do
       Plug.Conn.resp(conn, 204, "")
     end
 
-    assert {:ok, %Response{status: 204, doc: nil}} == Request.new(context.url)
+    assert {:ok, %Response{status: 204, doc: nil}} = Request.new(context.url)
     |> resource(%Resource{type: "articles", id: "123"})
     |> delete
 
-    assert {:ok, %Response{status: 204, doc: nil}} == Request.new(context.url <> "/articles")
+    assert {:ok, %Response{status: 204, doc: nil}} = Request.new(context.url <> "/articles")
     |> id("123")
     |> delete
   end
@@ -99,7 +112,7 @@ defmodule JsonApiClientTest do
       }
     }
 
-    assert {:ok, %Response{status: 201, doc: doc}} == Request.new(context.url)
+    assert {:ok, %Response{status: 201, doc: ^doc}} = Request.new(context.url)
     |> resource(new_article)
     |> create
   end
@@ -130,7 +143,7 @@ defmodule JsonApiClientTest do
       }
     }
 
-    assert {:ok, %Response{status: 200, doc: doc}} == Request.new(context.url)
+    assert {:ok, %Response{status: 200, doc: ^doc}} = Request.new(context.url)
     |> resource(new_article)
     |> update
   end
@@ -149,7 +162,7 @@ defmodule JsonApiClientTest do
         Plug.Conn.resp(conn, 422, "")
       end
 
-      assert {:ok, %Response{status: 422, doc: nil}} == fetch(Request.new(context.url <> "/"))
+      assert {:ok, %Response{status: 422, doc: nil}} = fetch(Request.new(context.url <> "/"))
     end
 
     test "HTTP error codes with valid Documents", context do
@@ -158,7 +171,7 @@ defmodule JsonApiClientTest do
         Plug.Conn.resp(conn, 422, Poison.encode! doc)
       end
 
-      assert {:ok, %Response{status: 422, doc: doc}} == fetch(Request.new(context.url <> "/"))
+      assert {:ok, %Response{status: 422, doc: ^doc}} = fetch(Request.new(context.url <> "/"))
     end
 
     test "Failed TCP/HTTP connection", context do
@@ -245,6 +258,34 @@ defmodule JsonApiClientTest do
         }
       }]
     }
+  end
+
+  describe "dangerous execution functions raise erorrs on error" do
+    setup context do
+      Bypass.down(context.bypass)
+      [request: Request.new(context.url <> "/articles")]
+    end
+
+    test "execute!", %{request: req}, do: assert_raise RequestError, fn -> execute! req end
+    test "fetch!"  , %{request: req}, do: assert_raise RequestError, fn -> fetch!   req end
+    test "update!" , %{request: req}, do: assert_raise RequestError, fn -> update!  req end
+    test "create!" , %{request: req}, do: assert_raise RequestError, fn -> create!  req end
+    test "delete!" , %{request: req}, do: assert_raise RequestError, fn -> delete!  req end
+  end
+
+  describe "dangerous execution functions return Response on success" do
+    setup context do
+      Bypass.expect context.bypass, fn conn ->
+        Plug.Conn.resp(conn, 200, Poison.encode! multiple_resource_doc())
+      end
+      [request: Request.new(context.url <> "/articles")]
+    end
+
+    test "execute!", %{request: req}, do: assert %Response{} = execute! req
+    test "fetch!"  , %{request: req}, do: assert %Response{} = fetch!   req
+    test "update!" , %{request: req}, do: assert %Response{} = update!  req
+    test "create!" , %{request: req}, do: assert %Response{} = create!  req
+    test "delete!" , %{request: req}, do: assert %Response{} = delete!  req
   end
 
   def error_doc do

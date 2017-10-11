@@ -3,5 +3,8 @@ defmodule JsonApiClient.RequestError do
   A Fatal Error during an API request
   """
 
-  defstruct [:reason, :msg, :original_error, :status]
+  defexception [:reason, :message, :original_error, :status]
+
+  def exception(%__MODULE__{} = exception), do: exception
+  def exception(params), do: struct(__MODULE__, params)
 end

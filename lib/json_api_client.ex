@@ -12,15 +12,23 @@ defmodule JsonApiClient do
 
   @doc "Execute a JSON API Request using HTTP GET"
   def fetch(req), do: req |> Request.method(:get) |> execute
+  @doc "Error raising version of `fetch/1`"
+  def fetch!(req), do: req |> Request.method(:get) |> execute!
 
   @doc "Execute a JSON API Request using HTTP POST"
   def create(req), do: req |> Request.method(:post) |> execute
+  @doc "Error raising version of `create/1`"
+  def create!(req), do: req |> Request.method(:post) |> execute!
 
   @doc "Execute a JSON API Request using HTTP PATCH"
   def update(req), do: req |> Request.method(:patch) |> execute
+  @doc "Error raising version of `update/1`"
+  def update!(req), do: req |> Request.method(:patch) |> execute!
 
   @doc "Execute a JSON API Request using HTTP DELETE"
   def delete(req), do: req |> Request.method(:delete) |> execute
+  @doc "Error raising version of `delete/1`"
+  def delete!(req), do: req |> Request.method(:delete) |> execute!
 
   @doc """
   Execute a JSON API Request
@@ -58,6 +66,14 @@ defmodule JsonApiClient do
     end
   end
 
+  @doc "Error raising version of `execute/1`"
+  def execute!(req) do
+    case execute(req) do
+      {:ok, response} -> response
+      {:error, error} -> raise error
+    end
+  end
+
   defp do_request(req) do
     url          = Request.get_url(req)
     query_params = Request.get_query_params(req)
@@ -76,7 +92,11 @@ defmodule JsonApiClient do
   defp parse_response(response) do
     with {:ok, doc} <- parse_document(response.body)
     do
-      {:ok, %Response{status: response.status_code, doc: doc}}
+      {:ok, %Response{
+        status: response.status_code,
+        doc: doc,
+        headers: response.headers,
+      }}
     else
       {:error, error} ->
         {:error, %RequestError{

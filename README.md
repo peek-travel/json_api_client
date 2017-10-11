@@ -1,10 +1,13 @@
+# Warning:
+This library is currently in an alpha state and is not yet feature complete. It is not recommended for production environments. Stay tuned for a 1.0 release soon.
+
 # JsonApiClient
 
-**TODO: Add description**
+A JSON API Client for elixir.
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
+This package can be installed
 by adding `json_api_client` to your list of dependencies in `mix.exs`:
 
 ```elixir
@@ -23,10 +26,10 @@ be found at [https://hexdocs.pm/json_api_client](https://hexdocs.pm/json_api_cli
 
 ### client name
 
-Every request made to a service carries a special `User-Agent` header that looks like: `ExApiClient/0.1.0/client_name`. Each client is expected to set its `client_name` via:
+Every request made carries a special `User-Agent` header that looks like: `ExApiClient/0.1.0/client_name`. Each client is expected to set its `client_name` via:
 
 ```
-config :json_api_client, client_name: "valentine"
+config :json_api_client, client_name: "yourAppName"
 ```
 
 ### timeout
@@ -40,3 +43,4 @@ config :json_api_client, timeout: 200
 ## How to use
 
 TODO: fill this in
+
