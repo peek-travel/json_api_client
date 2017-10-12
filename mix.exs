@@ -4,7 +4,7 @@ defmodule JsonApiClient.Mixfile do
   def project do
     [
       app: :json_api_client,
-      version: "0.5.0",
+      version: "0.5.1",
       elixir: "~> 1.5",
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
@@ -36,14 +36,12 @@ defmodule JsonApiClient.Mixfile do
     [
       {:credo, "~> 0.8", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.7.2", only: [:dev, :test]},
-      {:ex_aws, "~> 1.1.4"},
       {:ex_doc, "~>0.16.3", only: :dev},
       {:httpoison, "~> 0.13.0"},
       {:poison, "~> 3.1"},
       {:mock, "~> 0.3.0", only: :test, runtime: false},
       {:bypass, "~> 0.8", only: :test},
       {:uuid, "~> 1.1", only: :test},
-      {:faker, "~> 0.9"},
       {:exjsx, "~> 4.0.0"},
       {:uri_query, "~> 0.1.1"},
       {:deep_merge, "~> 0.1.0"}
@@ -60,7 +58,6 @@ defmodule JsonApiClient.Mixfile do
 
   defp package do
     [
-      organization: "decisiv",
       licenses: ["MIT"],
       maintainers: [
         "Chan Park",
