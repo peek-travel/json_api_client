@@ -119,4 +119,59 @@ defmodule JsonApiClient.RequestTest do
       end
     end
   end
+
+  describe "get_url()" do
+    test "when resource does not have id" do
+      url = new("http://api.net")
+      |> resource(%JsonApiClient.Resource{type: "articles"})
+      |> get_url
+
+      assert "http://api.net/articles" = url
+    end
+
+    test "when resource has id" do
+      url = new("http://api.net")
+      |> resource(%JsonApiClient.Resource{type: "articles", id: "1"})
+      |> get_url
+
+      assert "http://api.net/articles/1" = url
+    end
+  end
+
+  describe "path()" do
+    test "when resource does not have id" do
+      req = new("http://api.net")
+      |> path(%JsonApiClient.Resource{type: "articles"})
+
+      assert "http://api.net/articles" = req.base_url
+    end
+
+    test "when resource has id" do
+      req = new("http://api.net")
+      |> path(%JsonApiClient.Resource{type: "articles", id: "1"})
+
+      assert "http://api.net/articles/1" = req.base_url
+    end
+
+    test "when path is a string" do
+      req = new("http://api.net")
+      |> path("foo/bar")
+
+      assert "http://api.net/foo/bar" = req.base_url
+    end
+
+    test "when path has a `/` at the beginning" do
+      req = new("http://api.net")
+      |> path("/foo/bar")
+
+      assert "http://api.net/foo/bar" = req.base_url
+    end
+
+    test "when path has a `/` at the and" do
+      req = new("http://api.net")
+      |> path("/foo/bar/")
+
+      assert "http://api.net/foo/bar" = req.base_url
+    end
+  end
 end

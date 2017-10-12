@@ -1,8 +1,11 @@
-**  ⚠️Warning: This library is currently in an alpha state and is not yet feature complete. It is not recommended for production environments. Stay tuned for a 1.0 release soon. ⚠️**
-
 # JsonApiClient
+[![Hex.pm](https://img.shields.io/hexpm/v/json_api_client.svg)](https://hex.pm/packages/json_api_client)
+[![Build Docs](https://img.shields.io/badge/hexdocs-release-blue.svg)](https://hexdocs.pm/json_api_client)
 
-A JSON API Client for elixir. ([documentation](https://hexdocs.pm/json_api_client))
+A JSON API Client for elixir.
+
+**NOTICE**: This library is new and in active development. There could be
+backwards incompatable changes as the design shakes out. YMMV, PRs welcome.
 
 ## Installation
 
@@ -12,7 +15,7 @@ by adding `json_api_client` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:json_api_client, "~> 0.4.0"}
+    {:json_api_client, "~> 1.0.0"}
   ]
 end
 ```
@@ -104,6 +107,18 @@ When making requests to API endpoints that follow these conventions you can avoi
 |> fetch
 ```
 
+You can also build paths to nested resources by passing a `Resource` to `path/2`
+
+```elixir
+# GET base_url <> "/articles/123/comments/456"
+{:ok, response} = Request.new(base_url)
+|> path(%Resource{id: "123", type: "articles"})
+|> resource(%Resource{id: "456", type: "comments"})
+|> fetch
+```
+
+If the API your making requests of follows a different URI pattern you can pass a string to `path/2` and it will be appended to the base url.
+
 ## Configuration
 
 ### client name
@@ -121,7 +136,3 @@ This library allows its users to specify a timeout for all its service calls by 
 ```
 config :json_api_client, timeout: 200
 ```
-
-## TODO
-
-* add module doc to Request and Response

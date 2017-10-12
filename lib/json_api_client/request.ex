@@ -28,6 +28,10 @@ defmodule JsonApiClient.Request do
   @doc "Associate a resource with this request"
   def resource(req, resource), do: Map.put(req, :resource, resource)
 
+  @doc "Associate a path with this request"
+  def path(req, %{type: _, id: _} = res), do: Map.merge(req, %{base_url: get_url(resource(req, res))})
+  def path(req, path), do: Map.merge(req, %{base_url: join_url_parts([req.base_url, String.trim(path, "/")])})
+
   @doc """
   Specify which fields to include
 
