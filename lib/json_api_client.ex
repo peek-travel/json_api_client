@@ -45,10 +45,10 @@ defmodule JsonApiClient do
   | 2**          | yes                   | `{:ok, %Response{status: 2**, doc: %Document{}}`                                     |
   | 4**          | yes                   | `{:ok, %Response{status: 4**, doc: %Document{} or nil}`                              |
   | 5**          | yes                   | `{:ok, %Response{status: 5**, doc: %Document{} or nil}`                              |
-  | 2**          | no                    | `{:error, %RequestError{status: 2**, reason: "Invalid response body"}}`              |
+  | 2**          | no                    | `{:error, %RequestError{status: 2**, message: "Invalid response body"}}`             |
   | 4**          | no                    | `{:ok, %Response{status: 4**, doc: nil}}`                                            |
   | 5**          | no                    | `{:ok, %Response{status: 3**, doc: nil}}`                                            |
-  | socket error | n/a                   | `{:error, %RequestError{status: nil, reason: :econnrefused, original_error: error}}` |
+  | socket error | n/a                   | `{:error, %RequestError{status: nil, message: "Error completing HTTP request econnrefused", original_error: error}}` |
 
   """
   def execute(req) do
@@ -56,13 +56,6 @@ defmodule JsonApiClient do
          {:ok, parsed}   <- parse_response(response)
     do
       {:ok, parsed}
-    else
-      {:error, %RequestError{} = error} -> {:error, error}
-      {:error, error} ->
-        {:error, %RequestError{
-          original_error: error,
-          reason: error.reason
-        }}
     end
   end
 
@@ -86,7 +79,14 @@ defmodule JsonApiClient do
                    |> Enum.into([])
     body = Request.get_body(req)
 
-    HTTPoison.request(req.method, url, body, headers, http_options)
+    case HTTPoison.request(req.method, url, body, headers, http_options) do
+      {:ok, _} = result -> result
+      {:error, error} ->
+        {:error, %RequestError{
+          original_error: error,
+          message: "Error completing HTTP request: #{error.reason}",
+        }}
+    end
   end
 
   defp parse_response(response) do
@@ -100,7 +100,7 @@ defmodule JsonApiClient do
     else
       {:error, error} ->
         {:error, %RequestError{
-          reason: "Parse Error",
+          message: "Error Parsing JSON API Document",
           original_error: error,
           status: response.status_code,
         }}

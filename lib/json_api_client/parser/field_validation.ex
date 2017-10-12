@@ -1,7 +1,5 @@
 defmodule JsonApiClient.Parser.FieldValidation do
-  @moduledoc """
-  Describes a JSON API Document field validation
-  """
+  @moduledoc false
 
   def valid?(name, field_definition, data) do
     Enum.reduce_while(to_validate(name, field_definition), :ok, fn validation, _ ->

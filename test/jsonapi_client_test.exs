@@ -178,9 +178,8 @@ defmodule JsonApiClientTest do
       Bypass.down(context.bypass)
 
       assert {:error, %RequestError{
-        original_error: %{reason: reason},
+        original_error: %{reason: :econnrefused},
         status: nil,
-        reason: reason,
       }} = fetch(Request.new(context.url <> "/"))
     end
   end

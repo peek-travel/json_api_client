@@ -1,7 +1,5 @@
 defmodule JsonApiClient.Parser.Schema do
-  @moduledoc """
-  Describes a JSON API Protocol
-  """
+  @moduledoc false
 
   def document_object do
     %{
@@ -83,7 +81,6 @@ defmodule JsonApiClient.Parser.Schema do
     %{
       representation: JsonApiClient.Links,
       fields: %{
-        self: nil,
         related: nil,
         self: nil,
         first: nil,

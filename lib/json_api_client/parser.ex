@@ -74,7 +74,7 @@ defmodule JsonApiClient.Parser do
     end)
   end
 
-  def compute_values(fields, data) do
+  defp compute_values(fields, data) do
     Enum.reduce_while(fields, {:ok, %{}}, fn({k, definition}, {_, acc}) ->
       case field_value(k, definition, data[to_string(k)]) do
         {:error, error} -> {:halt, {:error, error}}
