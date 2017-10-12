@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.5.2] - 2017-10-17
+### Fixed
+- Fixed package config so that primary documentation link in hex.pm works
+
 ## [0.5.1] - 2017-10-17
 ### Fixed
 - Removed `organization` from mix.exs so that package will be public

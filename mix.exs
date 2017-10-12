@@ -4,7 +4,7 @@ defmodule JsonApiClient.Mixfile do
   def project do
     [
       app: :json_api_client,
-      version: "0.5.1",
+      version: "0.5.2",
       elixir: "~> 1.5",
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
@@ -50,7 +50,7 @@ defmodule JsonApiClient.Mixfile do
 
   def docs do
     [
-      main: "README",
+      main: "readme",
       source_url: "https://github.com/Decisiv/json_api_client",
       extras: ["README.md"],
     ]
