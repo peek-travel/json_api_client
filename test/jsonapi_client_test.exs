@@ -1,9 +1,11 @@
 defmodule JsonApiClientTest do
   use ExUnit.Case
+  import ExUnit.CaptureLog
   doctest JsonApiClient, import: true
 
   import JsonApiClient
   import JsonApiClient.Request
+  alias JsonApiClient.Middleware.{Fuse, StatsTracker, DocumentParser, HTTPClient}
   alias JsonApiClient.{Request, Resource, Response, RequestError}
 
   setup do
@@ -14,7 +16,7 @@ defmodule JsonApiClientTest do
 
   test "includes status and headers from the HTTP response", context do
     Bypass.expect context.bypass, "GET", "/articles/123", fn conn ->
-      conn 
+      conn
       |> Plug.Conn.resp(200, "")
       |> Plug.Conn.put_resp_header("X-Test-Header", "42")
     end
@@ -40,6 +42,16 @@ defmodule JsonApiClientTest do
     assert {:ok, %Response{status: 200, doc: ^doc}} = Request.new(context.url <> "/articles")
     |> id("123")
     |> fetch
+  end
+
+  test "set user agent with user suffix", context do
+    Mix.Config.persist(json_api_client: [user_agent_suffix: "my_sufix"])
+    Bypass.expect context.bypass, "GET", "/articles/123", fn conn ->
+      assert Keyword.get(get_headers(conn), :"user-agent") == "json_api_client/" <> Mix.Project.config[:version] <> "/my_sufix"
+      Plug.Conn.resp(conn, 200, Poison.encode! single_resource_doc())
+    end
+    Request.new(context.url <> "/articles") |> id("123") |> method(:get) |> execute
+    Mix.Config.persist(json_api_client: [user_agent_suffix: Mix.Project.config[:app]])
   end
 
   test "get a list of resources", context do
@@ -184,6 +196,69 @@ defmodule JsonApiClientTest do
     end
   end
 
+  describe "Circuit Breaker middleware" do
+    setup context do
+      Bypass.down(context.bypass)
+
+      configured       = Application.get_env(:json_api_client, :middlewares, [])
+      max_fuse_request = 2
+      Mix.Config.persist(json_api_client: [middlewares: [
+        {Fuse, [{:opts, {{:standard, max_fuse_request, 10_000}, {:reset, 60_000}}}]}
+      ]])
+
+      on_exit fn ->
+        Mix.Config.persist(json_api_client: [middlewares: configured])
+      end
+
+      %{max_fuse_request: max_fuse_request}
+    end
+
+    test "stops requests processing", context do
+      for _ <- 0..context.max_fuse_request + 1 do fetch(Request.new(context.url <> "/")) end
+
+      assert {:error, %RequestError{
+        original_error: "Unavailable - json_api_client circuit blown",
+        status: nil,
+      }} = fetch(Request.new(context.url <> "/"))
+    end
+  end
+
+  describe "Stats Tracking middleware" do
+    setup context do
+      Bypass.expect context.bypass, fn conn ->
+        Plug.Conn.resp(conn, 200, Poison.encode! single_resource_doc())
+      end
+
+      configured = Application.get_env(:json_api_client, :middlewares, [])
+      Mix.Config.persist(json_api_client: [
+        middlewares: [
+          {StatsTracker, name: :parse_response, log: :info},
+          {DocumentParser, nil},
+          {StatsTracker, name: :http_request},
+          {HTTPClient, nil},
+        ]
+      ])
+
+      on_exit fn ->
+        Mix.Config.persist(json_api_client: [middlewares: configured])
+      end
+
+      :ok
+    end
+
+    test "logs stats", context do
+      url = context.url <> "/article/123"
+      log = capture_log fn ->
+        fetch(Request.new(url))
+      end
+
+      assert log =~ ~r/total_ms=\d+(\.\d+)?/
+      assert log =~ ~r/parse_response_ms=\d+(\.\d+)?/
+      assert log =~ ~r/http_request_ms=\d+(\.\d+)?/
+      assert log =~ "url=#{url}"
+    end
+  end
+
   def single_resource_doc do
     %JsonApiClient.Document{
       links: %JsonApiClient.Links{
@@ -226,7 +301,7 @@ defmodule JsonApiClientTest do
             },
             data: %JsonApiClient.ResourceIdentifier{ type: "people", id: "9" }
           },
-        }	
+        }
       }, %JsonApiClient.Resource{
         type: "articles",
         id: "2",
@@ -242,7 +317,7 @@ defmodule JsonApiClientTest do
             },
             data: %JsonApiClient.ResourceIdentifier{ type: "people", id: "9" }
           },
-        }	
+        }
       }],
       included: [%JsonApiClient.Resource{
         type: "people",
@@ -287,13 +362,14 @@ defmodule JsonApiClientTest do
     test "delete!" , %{request: req}, do: assert %Response{} = delete!  req
   end
 
+
   def error_doc do
     %JsonApiClient.Document{
       errors: [
 	%JsonApiClient.Error{
 	  status: "422",
 	  source: %JsonApiClient.ErrorSource{
-            pointer: "/data/attributes/first-name" 
+            pointer: "/data/attributes/first-name"
           },
 	  title:  "Invalid Attribute",
 	  detail: "First name must contain at least three characters."
@@ -302,11 +378,15 @@ defmodule JsonApiClientTest do
     }
   end
 
+  def get_headers(conn) do
+    for {name, value} <- conn.req_headers, do: {String.to_atom(name), value}
+  end
+
   def assert_has_json_api_headers(conn) do
-    headers = for {name, value} <- conn.req_headers, do: {String.to_atom(name), value}
+    headers = get_headers(conn)
 
     assert Keyword.get(headers, :accept) == "application/vnd.api+json"
     assert Keyword.get(headers, :"content-type") == "application/vnd.api+json"
-    assert Keyword.get(headers, :"user-agent") |> String.starts_with?("ExApiClient")
+    assert Keyword.get(headers, :"user-agent") == "json_api_client/" <> Mix.Project.config[:version] <> "/#{Mix.Project.config[:app]}"
   end
 end

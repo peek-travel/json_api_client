@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.1.0] - 2017-25-17
+### Changed
+- Renamed client_name to user_agent_suffix
+- use Mix.Project.config[:app] as a default value for user_agent_suffix
+- Use "JsonApiClient" (package name) as user agent prefix instead of "ExApiClient".
+
+### Added
+- Added `Request.header/3` method
+- Added middleware architecture
+- Added `Fuse` and `StatsTracker` middlewares
+
+### Fixed
+- Path generation from a now works correctly for post requests when `resource` specified
+
 ## [1.0.0] - 2017-10-17
 ### Added
 - `Request.path/2` added

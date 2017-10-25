@@ -5,4 +5,4 @@ cleanup () {
 trap cleanup EXIT
 
 docker build -t json_api_client:latest .
-docker run --rm -e MIX_ENV=test json_api_client:latest ci
+docker run --rm json_api_client:latest ci

@@ -28,7 +28,7 @@ defmodule JsonApiClient.RequestTest do
       req = fields(%Request{}, sometype: [:name, :email])
       assert get_query_params(req) == [{"fields[sometype]", "name,email"}]
     end
-        
+
     test "fields for multiple types accepted in multiple calls" do
       req = %Request{}
       |> fields(type1: [:name, :email])
@@ -66,7 +66,7 @@ defmodule JsonApiClient.RequestTest do
       req = include(%Request{}, ["comments.author", "author"])
       assert get_query_params(req) == [{"include", "comments.author,author"}]
     end
-      
+
     test "multiple calls are addative" do
       req = %Request{}
       |> include("comments.author")
@@ -77,7 +77,7 @@ defmodule JsonApiClient.RequestTest do
   end
 
   def assert_updates_param(field_name) do
-    assert %{params: %{^field_name => "someval"}} = 
+    assert %{params: %{^field_name => "someval"}} =
       apply(Request, field_name, [%Request{}, "someval"])
   end
 
@@ -86,7 +86,7 @@ defmodule JsonApiClient.RequestTest do
   test "method", do: assert_updates_field(:method)
 
   def assert_updates_field(field_name) do
-    assert %{^field_name => "someval"} = 
+    assert %{^field_name => "someval"} =
       apply(Request, field_name, [%Request{}, "someval"])
   end
 
@@ -129,12 +129,40 @@ defmodule JsonApiClient.RequestTest do
       assert "http://api.net/articles" = url
     end
 
+    test "when request method is a post" do
+      url = new("http://api.net")
+      |> resource(%JsonApiClient.Resource{type: "articles", id: "1", attributes: %{comment: "some_comment"}})
+      |> method(:post)
+      |> get_url
+
+      assert "http://api.net/articles" = url
+    end
+
     test "when resource has id" do
       url = new("http://api.net")
       |> resource(%JsonApiClient.Resource{type: "articles", id: "1"})
       |> get_url
 
       assert "http://api.net/articles/1" = url
+    end
+
+    test "when getting a nested resource" do
+      url = new("http://api.net")
+      |> path(%JsonApiClient.Resource{type: "notes", id: "123"})
+      |> resource(%JsonApiClient.Resource{type: "replies", id: "345"})
+      |> get_url
+
+      assert "http://api.net/notes/123/replies/345" = url
+    end
+
+    test "when creating a nested resource" do
+      url = new("http://api.net")
+      |> path(%JsonApiClient.Resource{type: "notes", id: "123"})
+      |> resource(%JsonApiClient.Resource{type: "replies", id: "345", attributes: %{body: "body"}})
+      |> method(:post)
+      |> get_url
+
+      assert "http://api.net/notes/123/replies" = url
     end
   end
 
@@ -172,6 +200,32 @@ defmodule JsonApiClient.RequestTest do
       |> path("/foo/bar/")
 
       assert "http://api.net/foo/bar" = req.base_url
+    end
+  end
+
+  describe "header()" do
+    test "when new values is added" do
+      req = new("http://api.net")
+      |> header("X-My-Header", "My header")
+
+      assert %Request{headers: %{"X-My-Header" => "My header"}} = req
+    end
+
+    test "when a header is already added" do
+      req = new("http://api.net")
+      |> header("X-My-Header", "My header")
+      |> header("X-My-Header", "My header 2")
+
+      assert %Request{headers: %{"X-My-Header" => "My header 2"}} = req
+    end
+  end
+
+  describe "service_name" do
+    test "sents new value" do
+      req = new("http://api.net")
+      |> service_name("my service")
+
+      assert %Request{service_name: "my service"} = req
     end
   end
 end

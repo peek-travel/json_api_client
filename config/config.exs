@@ -10,9 +10,6 @@ use Mix.Config
 
 # You can configure your application as:
 #
-config :json_api_client,
-  client_name: "client_name"
-#
 # and access this configuration in your application as:
 #
 #     Application.get_env(:json_api_client, :key)
@@ -28,4 +25,11 @@ config :json_api_client,
 # Configuration from the imported file will override the ones defined
 # here (which is why it is important to import them last).
 #
+
+config :logger, [
+  handle_sasl_reports: true
+]
+
+Logger.add_translator {JsonApiClient.Config.SASLLogs, :suppress}
+
 import_config "#{Mix.env}.exs"

@@ -4,7 +4,7 @@ defmodule JsonApiClient.Mixfile do
   def project do
     [
       app: :json_api_client,
-      version: "1.0.0",
+      version: "1.1.0",
       elixir: "~> 1.5",
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
@@ -14,9 +14,10 @@ defmodule JsonApiClient.Mixfile do
       aliases: aliases(),
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [
-        "coveralls": :test,
+        "ci": :test,
         "coveralls.html": :test,
         "coveralls.post": :test,
+        "coveralls": :test,
       ],
       deps: deps(),
       docs: docs(),
@@ -27,7 +28,7 @@ defmodule JsonApiClient.Mixfile do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger, :deep_merge]
+      extra_applications: [:sasl, :logger, :deep_merge, :fuse]
     ]
   end
 
@@ -44,7 +45,8 @@ defmodule JsonApiClient.Mixfile do
       {:uuid, "~> 1.1", only: :test},
       {:exjsx, "~> 4.0.0"},
       {:uri_query, "~> 0.1.1"},
-      {:deep_merge, "~> 0.1.0"}
+      {:deep_merge, "~> 0.1.0"},
+      {:fuse, "~> 2.4"}
     ]
   end
 

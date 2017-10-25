@@ -12,6 +12,7 @@ defmodule JsonApiClient.Request do
     method: :get,
     headers: %{},
     options: %{},
+    service_name: nil
   )
 
   @doc "Create a request with the given base URL"
@@ -27,6 +28,9 @@ defmodule JsonApiClient.Request do
 
   @doc "Associate a resource with this request"
   def resource(req, resource), do: Map.put(req, :resource, resource)
+
+  @doc "Associate a service_name with this request"
+  def service_name(req, service_name), do: Map.put(req, :service_name, service_name)
 
   @doc "Associate a path with this request"
   def path(req, %{type: _, id: _} = res), do: Map.merge(req, %{base_url: get_url(resource(req, res))})
@@ -47,6 +51,13 @@ defmodule JsonApiClient.Request do
     new_fields = Enum.into(fields_to_add, current_fields)
     params(req, fields: new_fields)
   end
+
+  @doc """
+  Add a a header to the request.".
+
+      header(%Request{}, "X-My-Header", "My header value")
+  """
+  def header(req, header_name, header_value), do: %{req | headers: Map.put(req.headers, header_name, header_value)}
 
   defp encode_fields(%{fields: %{} = fields} = params) do
     encoded_fields = fields
@@ -100,7 +111,7 @@ defmodule JsonApiClient.Request do
   Add query params to the request.
 
   Will add to existing params when called multiple times with different keys,
-  but individual parameters will be overwritten. Supports nested attributes. 
+  but individual parameters will be overwritten. Supports nested attributes.
 
       iex> req = new("http://api.net") |> params(a: "foo", b: "bar")
       iex> req |> get_query_params |> URI.encode_query
@@ -125,7 +136,7 @@ defmodule JsonApiClient.Request do
   The URL returned does not include the query string
 
   ## Examples
-  
+
       iex> new("http://api.net") |> id("123") |> get_url
       "http://api.net/123"
       iex> post = %JsonApiClient.Resource{type: "posts", id: "123"}
@@ -134,6 +145,8 @@ defmodule JsonApiClient.Request do
   """
   def get_url(%Request{base_url: base_url, id: id}) when not is_nil(id),
     do: join_url_parts [base_url, id]
+  def get_url(%Request{base_url: base_url, resource: %{type: type}, method: :post}),
+    do: join_url_parts [base_url, type]
   def get_url(%Request{base_url: base_url, resource: %{type: type, id: id}}),
     do: join_url_parts [base_url, type, id]
   def get_url(%Request{base_url: base_url}),
@@ -153,8 +166,8 @@ defmodule JsonApiClient.Request do
   The "params" stored in the Request struct are represented as nested hashed and arrays. This function flattens out the hashes and converts the values for attributes that take lists like `incldues` and `fields` and converts them to the comma separated strings that JSON API expects.
 
   ## Examples
-      
-      iex> req = new("http://api.net") 
+
+      iex> req = new("http://api.net")
       iex> req |> fields(type1: [:a, :b, :c]) |> get_query_params
       [{"fields[type1]", "a,b,c"}]
       iex> req |> params(a: %{b: %{c: "foo"}}) |> get_query_params

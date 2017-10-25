@@ -1,7 +1,5 @@
 defmodule JsonApiClient.Parser do
-  @moduledoc """
-  Parses a JSON API Document
-  """
+  @moduledoc false
 
   alias JsonApiClient.Parser.{FieldValidation, Schema}
 

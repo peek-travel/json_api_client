@@ -6,7 +6,13 @@ defmodule JsonApiClient.RequestError do
   * message - a short description of the error
   * original_error - The original error, if this error wraps one thrown by another library
   * status - The HTTP status code of the request, if any
+  * attributes - Custom attributes.
   """
 
-  defexception [:message, :original_error, :status]
+  defexception(
+    message: nil,
+    original_error: nil,
+    status: nil,
+    attributes: %{}
+  )
 end
