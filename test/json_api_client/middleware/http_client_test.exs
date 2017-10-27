@@ -4,6 +4,7 @@ defmodule JsonApiClient.Middleware.HTTPClientTest do
 
   import Mock
 
+  alias JsonApiClient.{Request, Resource}
   alias JsonApiClient.Middleware.HTTPClient
 
   @response_body "body"
@@ -11,24 +12,34 @@ defmodule JsonApiClient.Middleware.HTTPClientTest do
   setup do
     bypass  = Bypass.open
 
-    env = %{
-      method: :get,
-      url: "http://localhost:#{bypass.port}/articles",
-      body: "",
-      headers: [{"Accept", "application/vnd.api+json"}, {"Content-Type", "application/vnd.api+json"}],
-      http_options: [{:timeout, 500}, {:recv_timeout, 500}]
+    new_article = %Resource{
+      type: "articles",
+      attributes: %{
+        title: "JSON API paints my bikeshed!",
+      }
     }
 
-    {:ok, bypass: bypass, env: env}
+    req = %Request{
+      method: :post,
+      base_url: "http://localhost:#{bypass.port}",
+      resource: new_article,
+      params: %{filter: "value1"},
+      headers: %{accept: "application/vnd.api+json"},
+      options: %{timeout: 500, recv_timeout: 500}
+    }
+
+    {:ok, bypass: bypass, req: req}
   end
 
   test "uses HTTPoison as underlying http client", context do
     with_mock HTTPoison, [], [request: fn(method, url, body, headers, http_options) ->
-      assert method == context.env.method
-      assert url == context.env.url
-      assert body == context.env.body
-      assert headers == context.env.headers
-      assert http_options == context.env.http_options
+      assert method == context.req.method
+      assert url == Request.get_url(context.req)
+      assert body == Request.get_body(context.req)
+      assert headers == context.req.headers |> Enum.into([])
+      assert context.req.options
+      |> Map.put(:params, Request.get_query_params(context.req))
+      |> Enum.into([]) == http_options
 
       {:ok, %{status_code: 500, headers: [], body: ""}}
     end] do
@@ -37,7 +48,7 @@ defmodule JsonApiClient.Middleware.HTTPClientTest do
   end
 
   test "includes status_code from the HTTP response", context do
-    Bypass.expect context.bypass, "GET", "/articles", fn conn ->
+    Bypass.expect context.bypass, "POST", "/articles", fn conn ->
       conn
       |> Plug.Conn.resp(200, "")
     end
@@ -48,7 +59,7 @@ defmodule JsonApiClient.Middleware.HTTPClientTest do
   end
 
   test "includes headers from the HTTP response", context do
-    Bypass.expect context.bypass, "GET", "/articles", fn conn ->
+    Bypass.expect context.bypass, "POST", "/articles", fn conn ->
       conn
       |> Plug.Conn.resp(200, "")
       |> Plug.Conn.put_resp_header("x-test-header", "42")
@@ -60,7 +71,7 @@ defmodule JsonApiClient.Middleware.HTTPClientTest do
   end
 
   test "includes doc from the HTTP response", context do
-    Bypass.expect context.bypass, "GET", "/articles", fn conn ->
+    Bypass.expect context.bypass, "POST", "/articles", fn conn ->
       Plug.Conn.resp(conn, 200, @response_body)
     end
 
@@ -70,6 +81,6 @@ defmodule JsonApiClient.Middleware.HTTPClientTest do
   end
 
   defp call_middleware(context) do
-    HTTPClient.call(context.env, nil, nil)
+    HTTPClient.call(context.req, nil, nil)
   end
 end

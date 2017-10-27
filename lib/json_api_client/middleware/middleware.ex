@@ -9,13 +9,7 @@ defmodule JsonApiClient.Middleware do
 
   Args:
 
-    * `request` - holds http request properties:
-    - `method` - HTTP method as an atom (`:get`, `:head`, `:post`, `:put`,
-      `:delete`, etc.)
-    - `url` - target url as a binary string or char list
-    - `body` - request body as JSON string.
-    - `headers` - HTTP headers (e.g., `[{"Accept", "application/json"}]`)
-    - `http_options` - Keyword list of options
+  * `request` - JsonApiClient.Request that holds http request properties.
 
   This function returns `{:ok, response}` if the request is successful, `{:error, reason}` otherwise.
   `response` - HTTP response with the following properties:
@@ -24,7 +18,7 @@ defmodule JsonApiClient.Middleware do
     - `headers`- HTTP headers (e.g., `[{"Accept", "application/json"}]`)
 
   """
-  @type request :: %{method: atom, url: binary, body: any, headers: Keyword.t, http_options: Keyword.t}
+  @type request :: JsonApiClient.Request
   @callback call(request, ((request) -> {:ok, %{body: any, status_code: binary, headers: Keyword.t}} | {:error, any}),
-                options :: any) :: {:ok, %{body: any, status_code: binary, headers: Keyword.t}} | {:error, any}
+                 options :: any) :: {:ok, %{body: any, status_code: binary, headers: Keyword.t}} | {:error, any}
 end

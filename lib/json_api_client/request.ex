@@ -12,8 +12,14 @@ defmodule JsonApiClient.Request do
     method: :get,
     headers: %{},
     options: %{},
-    service_name: nil
+    service_name: nil,
+    attributes: %{}
   )
+
+  @doc "Create a request"
+  def new do
+    %__MODULE__{}
+  end
 
   @doc "Create a request with the given base URL"
   def new(base_url) do

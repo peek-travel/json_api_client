@@ -22,11 +22,11 @@ defmodule JsonApiClient.Middleware.Fuse do
   named based on the `service_name` of the request, if present.
   """
 
-  alias JsonApiClient.RequestError
+  alias JsonApiClient.{RequestError, Request}
 
   @defaults {{:standard, 2, 10_000}, {:reset, 60_000}}
 
-  def call(%{service_name: service_name} = request, next, options) do
+  def call(%Request{service_name: service_name} = request, next, options) do
     opts = options || []
     name = if is_nil(service_name), do: "json_api_client", else: service_name
 

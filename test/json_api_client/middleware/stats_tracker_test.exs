@@ -9,9 +9,9 @@ defmodule JsonApiClient.Middleware.StatsTrackerTest do
   
   alias JsonApiClient.Middleware.StatsTracker
   import JsonApiClient.Middleware.StatsTracker
-  alias JsonApiClient.Response
+  alias JsonApiClient.{Response, Request}
 
-  @request %{url: "http://example.com"}
+  @request Request.new("http://example.com")
 
   test "adds timer stats to the response" do
     response = %Response{doc: "the doc"}
@@ -72,7 +72,7 @@ defmodule JsonApiClient.Middleware.StatsTrackerTest do
     test "includes the url" do
       assert [
         url: "http://example.com",
-      ] = stats_from_request(%{url: "http://example.com"})
+      ] = stats_from_request(Request.new("http://example.com"))
     end
   end
 end

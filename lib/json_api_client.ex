@@ -4,13 +4,8 @@ defmodule JsonApiClient do
   the JSON API spec described at http://jsonapi.org
   """
 
-  @timeout Application.get_env(:json_api_client, :timeout, 500)
-  @version Mix.Project.config[:version]
-  @package_name JsonApiClient.Mixfile.project[:app]
-
   alias __MODULE__.Request
   alias __MODULE__.Middleware.Runner
-  alias Mix.Project
 
   @doc "Execute a JSON API Request using HTTP GET"
   def fetch(req), do: req |> Request.method(:get) |> execute
@@ -54,24 +49,7 @@ defmodule JsonApiClient do
 
   """
   def execute(req) do
-    url          = Request.get_url(req)
-    query_params = Request.get_query_params(req)
-    headers      = default_headers()
-                   |> Map.merge(req.headers)
-                   |> Enum.into([])
-    http_options = default_options()
-                   |> Map.merge(req.options)
-                   |> Map.put(:params, query_params)
-                   |> Enum.into([])
-    body = Request.get_body(req)
-
-    Runner.run %{
-      method: req.method,
-      url: url, body: body,
-      headers: headers,
-      http_options: http_options,
-      service_name: req.service_name
-    }
+    Runner.run(req)
   end
 
   @doc "Error raising version of `execute/1`"
@@ -80,34 +58,5 @@ defmodule JsonApiClient do
       {:ok, response} -> response
       {:error, error} -> raise error
     end
-  end
-
-  defp default_options do
-    %{
-      timeout: timeout(),
-      recv_timeout: timeout(),
-    }
-  end
-
-  defp default_headers do
-    %{
-      "Accept"       => "application/vnd.api+json",
-      "Content-Type" => "application/vnd.api+json",
-      "User-Agent"   => user_agent()              ,
-    }
-  end
-
-  defp user_agent do
-    [@package_name, @version, user_agent_suffix()]
-      |> Enum.reject(&is_nil/1)
-      |> Enum.join("/")
-  end
-
-  defp user_agent_suffix do
-    Application.get_env(:json_api_client, :user_agent_suffix, Project.config[:app])
-  end
-
-  defp timeout do
-    @timeout
   end
 end

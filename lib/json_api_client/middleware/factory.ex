@@ -3,6 +3,7 @@ defmodule JsonApiClient.Middleware.Factory do
 
   def middlewares do
     configured_middlewares() ++ [
+      {JsonApiClient.Middleware.DefaultRequestConfig, nil},
       {JsonApiClient.Middleware.DocumentParser, nil},
       {JsonApiClient.Middleware.HTTPClient, nil}
     ]

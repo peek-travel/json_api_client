@@ -4,12 +4,15 @@ defmodule JsonApiClient.Middleware.RunnerTest do
 
   import Mock
   alias JsonApiClient.Middleware.{Factory, Runner}
+  alias JsonApiClient.Request
+
+  @req %Request{}
 
   test "calls Middleware in the correct order" do
     with_mock Factory, [], [middlewares: fn() ->
       [{FirstTestMiddleware, nil}, {LastTestMiddleware, nil}]
     end] do
-      assert Runner.run("") == [:first, :last]
+      assert Runner.run(@req) == [:first, :last]
     end
   end
 
@@ -17,28 +20,28 @@ defmodule JsonApiClient.Middleware.RunnerTest do
     with_mock Factory, [], [middlewares: fn() ->
       [{StopTestMiddleware, nil}, {LastTestMiddleware, nil}]
     end] do
-      assert Runner.run("") == [:stop]
+      assert Runner.run(@req) == [:stop]
     end
   end
 end
 
 defmodule StopTestMiddleware do
   @behaviour JsonApiClient.Middleware
-  def call(_env, _next, _options) do
+  def call(_req, _next, _options) do
     [:stop]
   end
 end
 
 defmodule LastTestMiddleware do
   @behaviour JsonApiClient.Middleware
-  def call(_env, _next, _options) do
+  def call(_req, _next, _options) do
     [:last]
   end
 end
 
 defmodule FirstTestMiddleware do
   @behaviour JsonApiClient.Middleware
-  def call(env, next, _options) do
-    [:first | next.(env)]
+  def call(req, next, _options) do
+    [:first | next.(req)]
   end
 end

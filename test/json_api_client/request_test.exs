@@ -228,4 +228,10 @@ defmodule JsonApiClient.RequestTest do
       assert %Request{service_name: "my service"} = req
     end
   end
+
+  describe "new" do
+    test "creates an empty request" do
+      assert %Request{} == new()
+    end
+  end
 end

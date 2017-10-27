@@ -61,7 +61,9 @@ defmodule JsonApiClient.Middleware.StatsTracker do
   """
   require Logger
 
-  def call(request, next, opts) do
+  alias JsonApiClient.Request
+
+  def call(%Request{} = request, next, opts) do
     name = Access.get(opts, :name)
     log_level = Access.get(opts, :log, false)
 
@@ -101,8 +103,8 @@ defmodule JsonApiClient.Middleware.StatsTracker do
   end
 
   @doc false
-  def stats_from_request(request) do
-    [url: request.url]
+  def stats_from_request(%Request{} = request) do
+    [url: Request.get_url(request)]
   end
 
   defp log(stats, log_level) do

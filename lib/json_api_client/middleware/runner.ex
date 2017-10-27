@@ -3,7 +3,7 @@ defmodule JsonApiClient.Middleware.Runner do
 
   alias JsonApiClient.Middleware.Factory
 
-  def run(request) do
+  def run(%JsonApiClient.Request{} = request) do
     middleware_runner(Factory.middlewares()).(request)
   end
 
