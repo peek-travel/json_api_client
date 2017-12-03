@@ -28,7 +28,7 @@ defmodule JsonApiClient.Mixfile do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:sasl, :logger, :deep_merge, :fuse]
+      extra_applications: [:sasl, :logger, :deep_merge]
     ]
   end
 
@@ -45,8 +45,7 @@ defmodule JsonApiClient.Mixfile do
       {:uuid, "~> 1.1", only: :test},
       {:exjsx, "~> 4.0.0"},
       {:uri_query, "~> 0.1.1"},
-      {:deep_merge, "~> 0.1.0"},
-      {:fuse, "~> 2.4"}
+      {:deep_merge, "~> 0.1.0"}
     ]
   end
 
