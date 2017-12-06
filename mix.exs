@@ -28,7 +28,7 @@ defmodule JsonApiClient.Mixfile do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:sasl, :logger, :deep_merge]
+      extra_applications: [:logger]
     ]
   end
 
